@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedReminder - Premium Dashboard</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { 
+                        primary: '#4f46e5', 
+                        'primary-dark': '#4338ca',
+                        secondary: '#10b981', 
+                        sidebar: '#0f172a', 
+                        bg: '#f3f4f6' 
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #f3f4f6; color: #1e293b; }
+        .premium-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
+        .circular-chart { display: block; margin: 0 auto; max-width: 80%; max-height: 250px; }
+        .circle-bg { fill: none; stroke: #e2e8f0; stroke-width: 3.8; }
+        .circle { fill: none; stroke-width: 2.8; stroke-linecap: round; transition: stroke-dasharray 1s ease-out; }
+        
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden font-sans">
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="w-72 bg-sidebar text-slate-300 flex flex-col hidden lg:flex h-full shadow-2xl z-20">
+        <div class="h-20 flex items-center px-8 border-b border-slate-800">
+            <a href="#" class="flex items-center gap-3 text-2xl font-bold text-white tracking-tight">
+                <div class="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fa-solid fa-heart-pulse text-sm"></i>
+                </div>
+                Med<span class="text-indigo-400">Reminder</span>
+            </a>
+        </div>
+
+        <div class="flex-1 overflow-y-auto py-6 px-4 space-y-8">
+            <div>
+                <p class="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Asosiy</p>
+                <nav class="space-y-1" id="nav-main">
+                    <button onclick="switchTab('home', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 bg-indigo-500/10 text-indigo-400 rounded-xl font-semibold transition border border-indigo-500/20 text-left">
+                        <i class="fa-solid fa-border-all w-5 text-center"></i> Bosh sahifa
+                    </button>
+                    <button onclick="switchTab('plan', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition text-left">
+                        <i class="fa-solid fa-calendar-check w-5 text-center"></i> Mening rejam
+                    </button>
+                    <button onclick="switchTab('history', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition text-left">
+                        <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i> Qabul tarixi
+                    </button>
+                </nav>
+            </div>
+
+            <div>
+                <p class="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Tahlil va Sozlamalar</p>
+                <nav class="space-y-1" id="nav-settings">
+                    <button onclick="switchTab('stats', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition text-left">
+                        <i class="fa-solid fa-chart-pie w-5 text-center"></i> Statistika
+                    </button>
+                    <button onclick="switchTab('doctor', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition text-left">
+                        <i class="fa-solid fa-user-doctor w-5 text-center"></i> Shifokorim
+                    </button>
+                    <button onclick="switchTab('profile', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition text-left">
+                        <i class="fa-solid fa-gear w-5 text-center"></i> Profil sozlamalari
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ================= ASOSIY KONTENT ================= -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-bg relative">
+        
+        <!-- HEADER -->
+        <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 z-10 sticky top-0">
+            <div class="flex items-center gap-8">
+                <div class="relative hidden md:block w-72">
+                    <input type="text" placeholder="Dori yoki ma'lumot izlash..." class="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary focus:bg-white transition outline-none text-slate-700 font-medium">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-5">
+                <div class="hidden sm:flex items-center gap-2 text-sm font-semibold text-slate-600 bg-slate-100 px-4 py-2 rounded-xl">
+                    <i class="fa-regular fa-calendar text-primary"></i> <span id="current-date"></span>
+                </div>
+                <div class="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+                <button class="relative w-10 h-10 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-primary transition">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                </button>
+                <div class="flex items-center gap-3 cursor-pointer pl-2">
+                    <div class="text-right hidden md:block">
+                        <p class="text-sm font-bold text-slate-800">Abduvoitova Dildora</p>
+                        <p class="text-xs font-medium text-slate-500">Bemor profili</p>
+                    </div>
+                    <img src="https://i.pravatar.cc/150?img=11" alt="User" class="w-10 h-10 rounded-full border-2 border-indigo-100 object-cover">
+                </div>
+            </div>
+        </header>
+
+        <!-- DINAMIK SAHIFALAR -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-8">
+            <div class="max-w-7xl mx-auto">
+
+                <!-- 1. BOSH SAHIFA -->
+                <div id="tab-home" class="tab-content active space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-900">Xush kelibsiz, Dildora 👋</h1>
+                            <p class="text-slate-500 text-sm mt-1">Sog'ligingiz nazoratida bugungi holatingiz a'lo darajada.</p>
+                        </div>
+                        <button onclick="openAddModal()" class="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-indigo-200 flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Yangi dori qo'shish
+                        </button>
+                    </div>
+
+                    <!-- KPI Kartochkalar -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-2xl premium-shadow border border-slate-100">
+                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-clipboard-list"></i></div>
+                            <p class="text-sm font-semibold text-slate-500 mb-1">Bugungi jami reja</p>
+                            <h3 class="text-3xl font-extrabold text-slate-800" id="stat-total">3</h3>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl premium-shadow border border-slate-100">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-check-double"></i></div>
+                            <p class="text-sm font-semibold text-slate-500 mb-1">Qabul qilingan</p>
+                            <h3 class="text-3xl font-extrabold text-slate-800" id="stat-taken">0</h3>
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
+                                <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%" id="stat-progress"></div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl premium-shadow border border-slate-100">
+                            <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-bolt"></i></div>
+                            <p class="text-sm font-semibold text-slate-500 mb-1">Qat'iylik seriyasi</p>
+                            <h3 class="text-3xl font-extrabold text-slate-800">12 kun</h3>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl premium-shadow border border-slate-100">
+                            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-heart-pulse"></i></div>
+                            <p class="text-sm font-semibold text-slate-500 mb-1">Salomatlik indeksi</p>
+                            <h3 class="text-3xl font-extrabold text-emerald-500" id="stat-rate">95%</h3>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 space-y-6">
+                            <div class="bg-white rounded-2xl premium-shadow border border-slate-100 overflow-hidden">
+                                <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white">
+                                    <h2 class="text-lg font-bold text-slate-800">Qabul qilinishi kerak bo'lgan dorilar</h2>
+                                </div>
+                                <div class="divide-y divide-slate-100 p-2" id="meds-container"></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-2xl premium-shadow border border-slate-100 p-6 flex flex-col items-center">
+                                <h3 class="text-sm font-bold text-slate-800 w-full text-left mb-2">Bugungi natija</h3>
+                                <div class="relative w-40 h-40">
+                                    <svg viewBox="0 0 36 36" class="circular-chart text-primary w-full h-full">
+                                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                        <path class="circle" id="donut-progress" stroke-dasharray="0, 100" stroke="currentColor" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    </svg>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span class="text-3xl font-black text-slate-800" id="donut-text">0%</span>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Bajarildi</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl premium-shadow border border-slate-100 overflow-hidden flex flex-col h-72">
+                                <div class="px-6 py-4 border-b border-slate-100 bg-white"><h3 class="text-sm font-bold text-slate-800">So'nggi harakatlar</h3></div>
+                                <div class="p-6 overflow-y-auto flex-1 space-y-5" id="history-container">
+                                    <div class="h-full flex flex-col items-center justify-center text-slate-400"><p class="text-sm font-medium">Hozircha tarix yo'q.</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. MENING REJAM (Barcha dorilarni boshqarish va tahrirlash) -->
+                <div id="tab-plan" class="tab-content space-y-6">
+                    <div class="bg-white p-8 rounded-2xl premium-shadow border border-slate-100">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-slate-900">Barcha dori rejalari</h2>
+                                <p class="text-slate-500 text-sm mt-1">Bu yerdan dorilarni o'zgartirishingiz yoki o'chirib tashlashingiz mumkin.</p>
+                            </div>
+                            <button onclick="openAddModal()" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-xl font-bold text-sm transition">
+                                <i class="fa-solid fa-plus"></i> Qo'shish
+                            </button>
+                        </div>
+                        <div id="full-plan-container" class="space-y-4"></div>
+                    </div>
+                </div>
+
+                <!-- 3. QABUL TARIXI -->
+                <div id="tab-history" class="tab-content space-y-6">
+                    <div class="bg-white p-8 rounded-2xl premium-shadow border border-slate-100">
+                        <h2 class="text-2xl font-bold text-slate-900 mb-4">Qabul qilingan dorilar tarixi</h2>
+                        <p class="text-slate-500 mb-6">Barcha o'tgan kunlardagi qabul qilingan dorilar jurnali.</p>
+                        <div id="full-history-container" class="space-y-3">
+                            <p class="text-slate-400 text-sm">Hozircha bajarilgan tarix mavjud emas.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. STATISTIKA -->
+                <div id="tab-stats" class="tab-content space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-8 rounded-2xl premium-shadow border border-slate-100">
+                            <h2 class="text-xl font-bold text-slate-900 mb-2">Haftalik hisobot</h2>
+                            <p class="text-slate-500 text-sm mb-6">Oxirgi 7 kunlik dorilarni o'z vaqtida ichish foizi.</p>
+                            <div class="space-y-4">
+                                <div><div class="flex justify-between text-sm font-semibold mb-1"><span>Dushanba</span><span>100%</span></div><div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width: 100%"></div></div></div>
+                                <div><div class="flex justify-between text-sm font-semibold mb-1"><span>Seshanba</span><span>100%</span></div><div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width: 100%"></div></div></div>
+                                <div><div class="flex justify-between text-sm font-semibold mb-1"><span>Chorshanba</span><span>80%</span></div><div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width: 80%"></div></div></div>
+                                <div><div class="flex justify-between text-sm font-semibold mb-1"><span>Payshanba</span><span>100%</span></div><div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width: 100%"></div></div></div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl premium-shadow border border-slate-100 flex flex-col justify-center items-center text-center">
+                            <div class="w-20 h-20 bg-indigo-50 text-primary rounded-full flex items-center justify-center text-3xl mb-4"><i class="fa-solid fa-award"></i></div>
+                            <h3 class="text-xl font-bold text-slate-800 mb-2">Ajoyib intizom!</h3>
+                            <p class="text-slate-500 text-sm max-w-sm">Siz oxirgi haftada dorilarni o'z vaqtida ichish bo'yicha yuqori ko'rsatkichga erishdingiz.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. SHIFOKORIM -->
+                <div id="tab-doctor" class="tab-content space-y-6">
+                    <div class="bg-white p-8 rounded-2xl premium-shadow border border-slate-100 max-w-2xl">
+                        <div class="flex items-center gap-5 mb-6">
+                            <img src="https://i.pravatar.cc/150?img=43" alt="Dr" class="w-20 h-20 rounded-full object-cover border-4 border-indigo-50">
+                            <div>
+                                <h2 class="text-2xl font-bold text-slate-900">Dr. Malika Vohidova</h2>
+                                <p class="text-primary font-semibold">Oliy toifali Kardiolog-Terapevt</p>
+                                <p class="text-sm text-slate-400 mt-1">Respublika Ixtisoslashtirilgan Kardiologiya Markazi</p>
+                            </div>
+                        </div>
+                        <div class="border-t border-slate-100 pt-6 space-y-3">
+                            <p class="text-sm text-slate-600"><strong>Bog'lanish tel:</strong> +998 90 123-45-67</p>
+                            <p class="text-sm text-slate-600"><strong>Qabul vaqti:</strong> Dushanba - Juma (09:00 - 15:00)</p>
+                        </div>
+                        <button onclick="alert('Shifokorga xabar yuborildi!')" class="mt-8 px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-md hover:bg-primary-dark transition">Shifokorga murojaat yuborish</button>
+                    </div>
+                </div>
+
+                <!-- 6. PROFIL SOZLAMALARI -->
+                <div id="tab-profile" class="tab-content space-y-6">
+                    <div class="bg-white p-8 rounded-2xl premium-shadow border border-slate-100 max-w-2xl">
+                        <h2 class="text-2xl font-bold text-slate-900 mb-6">Bemor profil sozlamalari</h2>
+                        <form onsubmit="event.preventDefault(); alert('O\'zgarishlar saqlandi!');" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">F.I.O</label>
+                                <input type="text" value="Abduvoitova Dildora" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Telefon raqam</label>
+                                <input type="text" value="+998 93 444-55-66" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Elektron pochta</label>
+                                <input type="email" value="dildora@gmail.com" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-primary">
+                            </div>
+                            <button type="submit" class="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-md hover:bg-primary-dark transition mt-4">Saqlash</button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= MODAL: QO'SHISH / TAHRIRLASH ================= -->
+    <div id="add-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="modal-content">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white">
+                <h3 class="text-lg font-bold text-slate-800" id="modal-title">Yangi dori qo'shish</h3>
+                <button onclick="closeAddModal()" class="w-8 h-8 bg-slate-100 text-slate-500 hover:text-red-500 rounded-full flex justify-center items-center transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="p-6">
+                <form id="medForm" onsubmit="submitNewMed(event)" class="space-y-5">
+                    <input type="hidden" id="mEditId">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Dori nomi</label>
+                        <input type="text" id="mName" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-primary text-sm font-medium text-slate-800" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Dozasi</label>
+                        <input type="text" id="mDosage" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-primary text-sm font-medium text-slate-800" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Vaqti</label>
+                            <input type="time" id="mTime" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-primary text-sm font-medium text-slate-800" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Turi</label>
+                            <select id="mType" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-primary text-sm font-medium text-slate-800">
+                                <option value="Tabletka">Tabletka</option>
+                                <option value="Kapsula">Kapsula</option>
+                                <option value="Suyuqlik">Suyuqlik</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-3.5 mt-2 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold transition shadow-lg shadow-indigo-200">Saqlash</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT ================= -->
+    <script>
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('uz-UZ', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        let state = {
+            medications: [
+                { id: 1, name: "Vitamin D3", dosage: "2000 IU", time: "08:00", type: "Kapsula", instruction: "Ovqatdan keyin", status: "pending" },
+                { id: 2, name: "Amoksitsillin", dosage: "1 tabletka", time: "14:30", type: "Tabletka", instruction: "Ovqatdan keyin", status: "pending" }
+            ],
+            history: []
+        };
+
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition text-left";
+            });
+
+            if(btnElement) {
+                btnElement.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 bg-indigo-500/10 text-indigo-400 rounded-xl font-semibold transition border border-indigo-500/20 text-left";
+            }
+        }
+
+        function renderUI() {
+            renderMeds();
+            renderHistory();
+            updateStats();
+        }
+
+        function renderMeds() {
+            const container = document.getElementById('meds-container');
+            const planContainer = document.getElementById('full-plan-container');
+            container.innerHTML = '';
+            planContainer.innerHTML = '';
+            
+            const pending = state.medications.filter(m => m.status === 'pending').sort((a,b) => a.time.localeCompare(b.time));
+            
+            // To'liq reja oynasi uchun elementlar
+            if(state.medications.length === 0) {
+                planContainer.innerHTML = `<p class="text-slate-400 text-sm">Hozircha rejadagi dorilar yo'q.</p>`;
+            } else {
+                state.medications.forEach(med => {
+                    planContainer.innerHTML += `
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
+                            <div>
+                                <h4 class="font-bold text-slate-800">${med.name} <span class="text-xs text-slate-400 font-normal">(${med.type})</span></h4>
+                                <p class="text-xs text-slate-500">${med.dosage} • Vaqti: ${med.time}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold ${med.status === 'pending' ? 'bg-orange-100 text-orange-600' : 'bg-emerald-100 text-emerald-600'}">
+                                    ${med.status === 'pending' ? 'Kutilmoqda' : 'Ichildi'}
+                                </span>
+                                <button onclick="openEditModal(${med.id})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Tahrirlash"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteMed(${med.id})" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="O'chirish"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            if(pending.length === 0) {
+                container.innerHTML = `<div class="p-10 text-center"><p class="text-sm text-slate-500">Bugungi reja to'liq bajarildi.</p></div>`;
+                return;
+            }
+
+            pending.forEach(med => {
+                container.innerHTML += `
+                    <div class="p-4 sm:p-5 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center hover:bg-slate-50 transition rounded-xl m-1">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 mb-0.5">${med.name} <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md uppercase">${med.type}</span></h3>
+                            <p class="text-sm text-slate-500">${med.dosage} • ${med.instruction}</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-lg font-black text-slate-800">${med.time}</span>
+                            <button onclick="takeMed(${med.id})" class="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold transition shadow-sm">Ichdim</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function takeMed(id) {
+            const index = state.medications.findIndex(m => m.id === id);
+            if(index > -1) {
+                const med = state.medications[index];
+                med.status = 'taken';
+                const now = new Date();
+                const takenTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                state.history.unshift({ name: med.name, scheduled: med.time, taken: takenTime });
+                renderUI();
+            }
+        }
+
+        // Dori o'chirish
+        function deleteMed(id) {
+            if(confirm("Haqiqatan ham bu dori rejasini o'chirmoqchimisiz?")) {
+                state.medications = state.medications.filter(m => m.id !== id);
+                renderUI();
+            }
+        }
+
+        // Tahrirlash oynasini ochish
+        function openEditModal(id) {
+            const med = state.medications.find(m => m.id === id);
+            if(!med) return;
+
+            document.getElementById('modal-title').innerText = "Dorini tahrirlash";
+            document.getElementById('mEditId').value = med.id;
+            document.getElementById('mName').value = med.name;
+            document.getElementById('mDosage').value = med.dosage;
+            document.getElementById('mTime').value = med.time;
+            document.getElementById('mType').value = med.type;
+
+            openAddModal();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-container');
+            const fullHistory = document.getElementById('full-history-container');
+            
+            if(state.history.length === 0) return;
+            
+            container.innerHTML = '';
+            fullHistory.innerHTML = '';
+
+            state.history.forEach((log) => {
+                container.innerHTML += `
+                    <div class="flex gap-4 items-start border-b border-slate-100 pb-3">
+                        <div class="w-7 h-7 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-check text-xs"></i></div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800">${log.name}</p>
+                            <p class="text-xs text-slate-500">Soat ${log.taken} da ichildi</p>
+                        </div>
+                    </div>
+                `;
+                fullHistory.innerHTML += `
+                    <div class="p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl flex justify-between items-center">
+                        <span class="font-bold text-slate-800">${log.name}</span>
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full">Qabul qilindi (${log.taken})</span>
+                    </div>
+                `;
+            });
+        }
+
+        function updateStats() {
+            const total = state.medications.length;
+            const taken = state.medications.filter(m => m.status === 'taken').length;
+            const pending = total - taken;
+            
+            document.getElementById('stat-total').innerText = pending;
+            document.getElementById('stat-taken').innerText = taken;
+            
+            let percent = total === 0 ? 0 : (taken / total) * 100;
+            document.getElementById('stat-progress').style.width = `${percent}%`;
+            document.getElementById('donut-progress').setAttribute('stroke-dasharray', `${percent}, 100`);
+            document.getElementById('donut-text').innerText = `${Math.round(percent)}%`;
+            
+            let rate = total === 0 ? 100 : Math.round((taken / total) * 100) || 95;
+            document.getElementById('stat-rate').innerText = rate + '%';
+        }
+
+        function openAddModal() {
+            // Agar tahrirlash bo'lmasa, formani tozalaymiz
+            if(!document.getElementById('mEditId').value) {
+                document.getElementById('modal-title').innerText = "Yangi dori qo'shish";
+                document.getElementById('medForm').reset();
+                document.getElementById('mEditId').value = "";
+            }
+
+            const modal = document.getElementById('add-modal');
+            const content = document.getElementById('modal-content');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
+        }
+
+        function closeAddModal() {
+            const modal = document.getElementById('add-modal');
+            const content = document.getElementById('modal-content');
+            content.classList.remove('scale-100', 'opacity-100'); content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); document.getElementById('mEditId').value = ""; }, 300);
+        }
+
+        // Qo'shish yoki Tahrirlashni saqlash
+        function submitNewMed(e) {
+            e.preventDefault();
+            const editId = document.getElementById('mEditId').value;
+            
+            const name = document.getElementById('mName').value;
+            const dosage = document.getElementById('mDosage').value;
+            const time = document.getElementById('mTime').value;
+            const type = document.getElementById('mType').value;
+
+            if(editId) {
+                // Tahrirlash
+                const med = state.medications.find(m => m.id == editId);
+                if(med) {
+                    med.name = name;
+                    med.dosage = dosage;
+                    med.time = time;
+                    med.type = type;
+                }
+            } else {
+                // Yangi qo'shish
+                state.medications.push({
+                    id: Date.now(),
+                    name: name,
+                    dosage: dosage,
+                    time: time,
+                    type: type,
+                    instruction: "Ovqatdan keyin",
+                    status: 'pending'
+                });
+            }
+            
+            renderUI();
+            closeAddModal();
+            document.getElementById('medForm').reset();
+            document.getElementById('mEditId').value = "";
+        }
+
+        window.onload = renderUI;
+    </script>
+</body>
+</html>
